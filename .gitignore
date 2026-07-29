@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .env
 report.json
+netlify-deploy/.netlify/
+netlify-deploy/report.json
