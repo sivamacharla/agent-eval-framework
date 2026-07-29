@@ -1,5 +1,7 @@
 # AI Agent Evaluation & Observability Framework
 
+**[Live trace viewer demo →](https://macharla-agent-eval-viewer.netlify.app)** (static snapshot of a real eval run)
+
 A continuous evaluation pipeline that scores every agent output on
 hallucination rate, tool-call correctness, task completion, and
 instruction adherence — wired into CI so "did the AI get worse?" is a gate,
