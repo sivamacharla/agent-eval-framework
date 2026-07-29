@@ -50,6 +50,9 @@ fetch('../report.json').then(r => r.json()).then(results => {
       </div>`;
     container.appendChild(div);
   });
+  if (new URLSearchParams(location.search).has('expand')) {
+    document.querySelectorAll('.body').forEach(el => el.classList.add('open'));
+  }
 }).catch(() => {
   document.getElementById('cases').innerText = 'Run `python ci_gate.py` first to generate report.json, then serve this folder (e.g. `python -m http.server`) — do not open via file://.';
 });
