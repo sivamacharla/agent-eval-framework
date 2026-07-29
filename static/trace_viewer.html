@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Agent Eval — Trace Viewer</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f1117; color: #e6e6e6; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin-bottom: 16px; }
+  .case { background: #171923; border: 1px solid #2a2e3a; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .case-head { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .case-id { font-weight: 600; }
+  .scores span { margin-left: 10px; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: #22262f; }
+  .low { color: #ef6f6f; }
+  .ok { color: #6ee7a0; }
+  .body { display: none; margin-top: 12px; font-size: 13px; color: #c8ccd4; }
+  .body.open { display: block; }
+  .row { margin-bottom: 6px; }
+  .label { color: #9aa0aa; }
+  pre { white-space: pre-wrap; background: #0f1117; padding: 8px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<h1>Agent Eval — Trace Viewer</h1>
+<div id="cases"></div>
+<script>
+function scoreClass(v) { return v < 0.5 ? 'low' : 'ok'; }
+
+fetch('../report.json').then(r => r.json()).then(results => {
+  const container = document.getElementById('cases');
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'case';
+    div.innerHTML = `
+      <div class="case-head" onclick="document.getElementById('body-${i}').classList.toggle('open')">
+        <span class="case-id">${r.case_id}</span>
+        <span class="scores">
+          <span class="${scoreClass(r.hallucination)}">hallucination ${r.hallucination}</span>
+          <span class="${scoreClass(r.tool_call_correctness)}">tool ${r.tool_call_correctness}</span>
+          <span class="${scoreClass(r.task_completion)}">completion ${r.task_completion}</span>
+          <span class="${scoreClass(r.instruction_adherence)}">adherence ${r.instruction_adherence}</span>
+          <span class="${scoreClass(r.overall)}">overall ${r.overall}</span>
+        </span>
+      </div>
+      <div class="body" id="body-${i}">
+        <div class="row"><span class="label">Input:</span> ${r.trace.input}</div>
+        <div class="row"><span class="label">Reasoning steps:</span> ${r.trace.reasoning_steps.join(' → ')}</div>
+        <div class="row"><span class="label">Tool calls:</span><pre>${JSON.stringify(r.trace.tool_calls, null, 2)}</pre></div>
+        <div class="row"><span class="label">Final output:</span> ${r.trace.final_output}</div>
+        <div class="row"><span class="label">Reference:</span> ${r.trace.reference_output ?? '(none)'}</div>
+      </div>`;
+    container.appendChild(div);
+  });
+}).catch(() => {
+  document.getElementById('cases').innerText = 'Run `python ci_gate.py` first to generate report.json, then serve this folder (e.g. `python -m http.server`) — do not open via file://.';
+});
+</script>
+</body>
+</html>
