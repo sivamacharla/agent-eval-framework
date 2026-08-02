@@ -8,7 +8,7 @@ from .golden_dataset import GOLDEN_CASES
 from .scorer import EvalPipeline
 
 
-def run_eval_suite() -> list[dict]:
+def run_eval_suite(version: str | None = None) -> list[dict]:
     pipeline = EvalPipeline()
     results = []
     for case in GOLDEN_CASES:
@@ -17,6 +17,7 @@ def run_eval_suite() -> list[dict]:
             query=case["query"],
             expected_tool=case.get("expected_tool"),
             reference_output=case.get("reference_output"),
+            version=version,
         )
         score = pipeline.score(trace)
         results.append(score.to_dict())

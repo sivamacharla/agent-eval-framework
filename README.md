@@ -1,6 +1,14 @@
 # AI Agent Evaluation & Observability Framework
 
-**[Live trace viewer demo →](https://macharla-agent-eval-viewer.netlify.app)** (static snapshot of a real eval run)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sivamacharla/agent-eval-framework)
+
+**[Live demo →](https://macharla-agent-eval-demo.onrender.com)** — runs the real eval suite against a good agent and a simulated
+bad deploy side by side, live, and shows the gate flip from PASS to FAIL.
+(Sleeps after 15 min idle on Render's free tier; first load takes ~30-50s.)
+
+There's also a static trace-level viewer of one such run at
+[macharla-agent-eval-viewer.netlify.app](https://macharla-agent-eval-viewer.netlify.app),
+for inspecting full input/tool-calls/output per case.
 
 A continuous evaluation pipeline that scores every agent output on
 hallucination rate, tool-call correctness, task completion, and

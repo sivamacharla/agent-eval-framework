@@ -16,8 +16,14 @@ KNOWLEDGE_BASE = {
 }
 
 
-def run_agent(case_id: str, query: str, expected_tool: str | None = None, reference_output: str | None = None) -> Trace:
-    version = os.getenv("AGENT_VERSION", "good")
+def run_agent(
+    case_id: str,
+    query: str,
+    expected_tool: str | None = None,
+    reference_output: str | None = None,
+    version: str | None = None,
+) -> Trace:
+    version = version or os.getenv("AGENT_VERSION", "good")
 
     reasoning = [f"Parsing query: '{query}'", "Searching knowledge base for relevant entry"]
     matched_key = next((k for k in KNOWLEDGE_BASE if k in query.lower()), None)

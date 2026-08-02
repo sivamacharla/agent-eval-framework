@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>AI Agent Evaluation & Observability Framework — Live Demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f1117; color: #e6e6e6; margin: 0; padding: 24px; max-width: 1100px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #9aa0aa; margin-bottom: 20px; font-size: 13px; }
+  .sub a { color: #6ec6e7; }
+  button.run { padding: 11px 22px; border-radius: 8px; border: none; background: #4f7cff; color: white; font-weight: 600; cursor: pointer; font-size: 14px; }
+  button.run:disabled { opacity: 0.6; cursor: not-allowed; }
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+  .col { background: #171923; border: 1px solid #2a2e3a; border-radius: 10px; padding: 20px; display: none; }
+  .col.visible { display: block; }
+  .col-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .col-sub { color: #9aa0aa; font-size: 12px; margin-bottom: 16px; }
+  .verdict { padding: 12px 16px; border-radius: 8px; font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+  .verdict.pass { background: #1e3a2f; color: #6ee7a0; }
+  .verdict.fail { background: #3a1e1e; color: #ef6f6f; }
+  .avg { color: #9aa0aa; font-size: 12px; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  td, th { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a2e3a; }
+  th { color: #8b8fa3; font-weight: normal; }
+  .low { color: #ef6f6f; font-weight: 600; }
+  .ok { color: #6ee7a0; }
+  .loading { color: #9aa0aa; font-size: 13px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<h1>AI Agent Evaluation &amp; Observability Framework</h1>
+<p class="sub">Live demo — runs the real eval pipeline against two agent versions. Source: <a href="https://github.com/sivamacharla/agent-eval-framework" target="_blank" rel="noopener">github.com/sivamacharla/agent-eval-framework</a></p>
+
+<button class="run" id="runBtn">Run comparison: current agent vs. simulated bad deploy</button>
+<div class="loading" id="loading" style="display:none">Running eval suite against both agent versions…</div>
+
+<div class="columns">
+  <div class="col" id="col-good">
+    <div class="col-title">Current agent</div>
+    <div class="col-sub">Uses tool results correctly</div>
+    <div id="body-good"></div>
+  </div>
+  <div class="col" id="col-regressed">
+    <div class="col-title">Simulated bad deploy</div>
+    <div class="col-sub">Fabricates answers instead of using tool results</div>
+    <div id="body-regressed"></div>
+  </div>
+</div>
+
+<script>
+function scoreClass(v) { return v < 0.5 ? 'low' : 'ok'; }
+
+function renderColumn(elId, data) {
+  const el = document.getElementById(elId);
+  const verdictClass = data.passed ? 'pass' : 'fail';
+  const verdictText = data.passed ? 'GATE PASSED' : 'GATE FAILED';
+
+  let rows = data.results.map(r => `
+    <tr>
+      <td>${r.case_id}</td>
+      <td class="${scoreClass(r.hallucination)}">${r.hallucination}</td>
+      <td class="${scoreClass(r.tool_call_correctness)}">${r.tool_call_correctness}</td>
+      <td class="${scoreClass(r.task_completion)}">${r.task_completion}</td>
+      <td class="${scoreClass(r.instruction_adherence)}">${r.instruction_adherence}</td>
+      <td class="${scoreClass(r.overall)}"><b>${r.overall}</b></td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="verdict ${verdictClass}">${verdictText}</div>
+    <div class="avg">Average overall: ${data.average} (threshold: ${data.threshold}) ${data.below_floor.length ? '· below floor: ' + data.below_floor.join(', ') : ''}</div>
+    <table>
+      <tr><th>Case</th><th>Halluc.</th><th>Tool</th><th>Complete</th><th>Adherence</th><th>Overall</th></tr>
+      ${rows}
+    </table>
+  `;
+}
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('runBtn');
+  const loading = document.getElementById('loading');
+  btn.disabled = true;
+  loading.style.display = 'block';
+  document.getElementById('col-good').classList.remove('visible');
+  document.getElementById('col-regressed').classList.remove('visible');
+
+  try {
+    const [goodRes, regressedRes] = await Promise.all([
+      fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: 'good' }) }).then(r => r.json()),
+      fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: 'regressed' }) }).then(r => r.json()),
+    ]);
+
+    renderColumn('body-good', goodRes);
+    renderColumn('body-regressed', regressedRes);
+    document.getElementById('col-good').classList.add('visible');
+    document.getElementById('col-regressed').classList.add('visible');
+  } catch (e) {
+    loading.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
